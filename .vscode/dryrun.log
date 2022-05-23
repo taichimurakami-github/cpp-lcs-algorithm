@@ -1,0 +1,6 @@
+make --dry-run --keep-going --print-directory
+make: Entering directory `/Users/tchi/Dev_private/test'
+g++ main.cpp -O2
+./a.out
+make: Leaving directory `/Users/tchi/Dev_private/test'
+ 

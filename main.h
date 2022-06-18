@@ -8,7 +8,7 @@ struct LcsCell
   int score;
   int row;
   int col;
-  LcsCell *prev_cell;
+  // LcsCell *prev_cell;
 };
 
 void input(std::string *str_A, std::string *str_B);

@@ -1,44 +1,48 @@
-#include "./main.h"
+#include <stdio.h>
+#include <iostream>
 
-void input(std::string *str_A, std::string *str_B)
+/**
+ * @brief Structure of LcsCell
+ * (row, col)
+ *        col_1 col_2 col_3 .... col_n
+ * row_1  (0,0) (0,1) (0,2) .... (0,n-1)
+ * row_2  (1,0) ...
+ * row_3  (2,0) ...
+ * ...
+ * row_n  (m-1,0) ...
+ */
+struct LcsCell
 {
-  std::cout << "input FIRST string" << std::endl;
+  int score;
+  int row;
+  int col;
+  LcsCell *prevCell;
+};
 
-  std::cin >> *str_A;
-
-  std::cout << "input SECOND string" << std::endl;
-
-  std::cin >> *str_B;
-
-  // std::cout << "length of (str_A, str_B) = (" << str_A.length() << "," << str_B.length() << ")" << std::endl;
-}
-
-void resetLcsTable(LcsCell **dp, int y, int x)
+int getMaximumScore(int score1, int score2, int score3)
 {
-
-  for (int _y = 0; _y <= y; _y++)
+  int max = score1;
+  if (max < score2)
   {
-    fillInCell(&dp[_y][0], 0, _y, 0, NULL);
+    max = score2;
   }
-
-  // len = _x + 1 => _x <= xlen
-  for (int _x = 0; _x <= x; _x++)
+  if (max < score3)
   {
-    fillInCell(&dp[0][_x], 0, 0, _x, NULL);
+    max = score3;
   }
+  // std::cout << "(s1,s2,s3,m) = (" << score1 << "," << score2 << "," << score3 << "," << max << ")\n";
+  return max;
 }
 
 void printDpTable(LcsCell **dp, int y, int x)
 {
   std::cout << "\n\n---dp table---\n";
-
-  for (int i = 0; i <= y; i++)
+  int i, j;
+  for (i = 0; i <= y; i++)
   {
-    for (int j = 0; j <= x; j++)
+    for (j = 0; j <= x; j++)
     {
       std::cout << dp[i][j].score << " ";
-      // std::cout << "cell(y,x) = (" << i << "," << j << "):";
-      // std::cout << "(col, row, score) = (" << dp[i][i].col << "," << dp[i][i].col << "," << dp[i][j].score << ")\n";
     }
     std::cout << "\n";
   }
@@ -47,96 +51,162 @@ void printDpTable(LcsCell **dp, int y, int x)
             << std::endl;
 }
 
-//指定された通りにLcsTableのセルを埋める
-void fillInCell(LcsCell *cell, int score, int y, int x, LcsCell *prev_cell)
+int main()
 {
-  cell->score = score;
-  cell->row = x;
-  cell->col = y;
-  cell->prev_cell = prev_cell;
-  std::cout << "\n\n(y,x,score) = (" << cell->col << " , " << cell->row << " , " << cell->score << ")\n";
-}
 
-void fillInLcsTable(LcsCell **dp, std::string str_A, std::string str_B, int y, int x)
-{
-  // lcsアルゴリズム：str_A[i] == str_B[i] のとき、 dp[y-1][x-1] + 1する
-  // std::cout << "\n\n";
-  // std::cout << str_A << " , " << str_B << std::endl;
-  // std::cout << str_A[0] << " , " << str_A[1] << std::endl;
-  // std::cout << str_B[0] << " , " << str_B[1] << " , " << std::endl;
+  std::string str_r = "abcdefgh";
+  std::string str_c = "accccefh";
 
-  // 1列目・1行目以外について、LcsTableの値を埋める
-  for (int _y = 1; _y < y; _y++)
+  int row = str_r.length();
+  int col = str_c.length();
+
+  int dpColLength = col + 1;
+  int dpRowLength = row + 1;
+
+  LcsCell dp[dpRowLength][dpColLength];
+
+  // 初期化
+  for (int r = 0; r < dpRowLength; r++)
   {
-    for (int _x = 1; _x < x; _x++)
+    for (int c = 0; c < dpColLength; c++)
     {
-      printDpTable(dp, y, x);
-      int score_above_left = dp[_y - 1][_x - 1].score;
-      int score_above = dp[_y - 1][_x].score;
-      int score_left = dp[_y][_x - 1].score;
+      dp[r][c].row = r;
+      dp[r][c].col = c;
+      dp[r][c].score = 0;
+      // std::cout << "(y,x,score) = (" << dp[r][c].col << "," << dp[r][c].row << "," << dp[r][c].score << ")\n\n";
+    }
+  }
 
-      std::cout << "\n\nscore_above_left : " << _y - 1 << "," << _x - 1 << " = " << score_above_left << "\n";
-      std::cout << "score_above : " << _y - 1 << "," << _x << " = " << score_above << "\n";
-      std::cout << "score_left : " << _y << "," << _x - 1 << " = " << score_left << "\n";
+  /**
+   * LCSアルゴリズム実装
+   *
+   * Table[i][j] =
+   *     Table[i-1][j-1] + 1 if S1[i] == S2[j]
+   *
+   *   else
+   *     Max(Table[i][j-1], Table[i-1][j])
+   */
+  char prevLcsChar;
+  for (int r = 1; r < dpRowLength; r++)
+  {
 
-      if (str_A[_y] == str_B[_x])
+    for (int c = 1; c < dpColLength; c++)
+    {
+      char colChar = str_c[c - 1]; //横列の文字
+      char rowChar = str_r[r - 1]; //縦列の文字
+
+      // LcsCell cell = dp[r][c]; <- NG: cellはdp[r][c]とはメモリ上別物になるので，これをやるなら LcsCell* cell = &(dp[r][c]);であろう（実際，cellに代入してもdpには反映されない）
+      // cell.col = c;
+      // cell.row = r;
+
+      LcsCell *cell = &(dp[r][c]);
+
+      cell->col = c; // dp[r][c].col = c; でも可
+      cell->row = r; // dp[r][c].row = r; でも可
+
+      if (colChar == rowChar)
       {
-        // LCSテーブルの値を、左上のセルのスコア+1とする
-        fillInCell(&dp[_y][_x], score_above_left, _y, _x, &dp[_y - 1][_x - 1]);
+        if (prevLcsChar != colChar)
+        {
+          std::cout << colChar;
+          prevLcsChar = colChar;
+        }
+
+        cell->score = dp[r - 1][c - 1].score + 1;
+        cell->prevCell = &dp[r - 1][c - 1];
       }
       else
       {
-        //等しい文字でなかった場合
-        //左上、上、左のセルの中で最も大きな値を入れる
-        if (score_above_left >= score_above)
+        LcsCell *aboveCell = &dp[r - 1][c];
+        LcsCell *aboveLeftCell = &dp[r - 1][c - 1];
+        LcsCell *leftCell = &dp[r][c - 1];
+
+        /**
+         * cellに対して左上，上，左で隣接しているcellのscoreを比較
+         * prevCellを埋める & cell.scoreを決定する
+         */
+        if (aboveLeftCell->score >= aboveCell->score && aboveLeftCell->score >= leftCell->score)
         {
-          //左上が最大
-          fillInCell(&dp[_y][_x], score_above_left, _y, _x, &dp[_y - 1][_x - 1]);
+          //左上のセルのscoreが一番大きい
+          cell->score = aboveLeftCell->score;
+          cell->prevCell = aboveLeftCell;
         }
-        else if (score_above >= score_left)
+        else if (aboveCell->score >= leftCell->score)
         {
-          //上が最大
-          fillInCell(&dp[_y][_x], score_above, _y, _x, &dp[_y - 1][_x]);
+          //上のセルのscoreが一番大きい
+          cell->score = aboveCell->score;
+          cell->prevCell = aboveCell;
         }
         else
         {
-          //左が最大
-          fillInCell(&dp[_y][_x], score_left, _y, _x, &dp[_y][_x - 1]);
-        }
+          //左のセルのscoreが一番大きい
+          cell->score = leftCell->score;
+          cell->prevCell = leftCell;
+        };
       }
     }
   }
-}
 
-int main()
-{
-  std::string str_A = "abcde";
-  std::string str_B = "abcdef";
-  std::cout << "length of (str_A, str_B) = (" << str_A.length() << "," << str_B.length() << ")" << std::endl;
+  /**
+   * dpテーブル出力
+   */
 
-  // input(&str_A, &str_B);
-
-  int y = str_A.length();
-  int x = str_B.length();
-  LcsCell **dp;
-
-  //二次元配列の要素確保
-  int dpColMemSize = sizeof(LcsCell *) * (y + 1);
-  dp = (LcsCell **)malloc(dpColMemSize);
-
-  int dpRowMemSize = sizeof(LcsCell *) * (x + 1);
-  for (int _y = 0; _y < y + 1; _y++)
+  //１行目出力
+  std::cout << "\n\n    ";
+  for (int c = 0; c < dpColLength - 1; c++) // str_c.length() = dpColLength - 1
   {
-    dp[_y] = (LcsCell *)malloc(dpRowMemSize);
+    std::cout << str_c[c] << " "; // str_c[c]
+  }
+  std::cout << "\n ";
+
+  //２行目以降出力
+  for (int r = 0; r < dpRowLength; r++)
+  {
+    std::cout << str_r[r - 1] << " "; //１列目出力(str_r[r])
+
+    for (int c = 0; c < dpColLength; c++)
+    {
+      std::cout << dp[r][c].score << " ";
+    }
+    std::cout << "\n"; //デバッグ用出力
   }
 
-  std::cout << "str length: (str_A, str_B) = (" << y << "," << x << ")\n";
+  /**
+   * LCS文字列出力
+   */
+  int r = dpRowLength - 1;
+  int c = dpColLength - 1;
+  int cnt = 100;
 
-  resetLcsTable(dp, y, x);
+  std::cout << "\n";
 
-  printDpTable(dp, y, x);
+  // while (1)
+  // {
 
-  fillInLcsTable(dp, str_A, str_B, y, x);
+  //   std::cout << str_r[r];
 
-  printDpTable(dp, y, x);
+  //   r = dp[r][c].prevCell->row;
+  //   c = dp[r][c].prevCell->col;
+  //   cnt--;
+  //   if (r == 0 || c == 0)
+  //   {
+  //     break;
+  //   }
+  // }
+
+  // for (int r = dpRowLength - 1; r >= 0; r--)
+  // {
+  //   for (int c = dpColLength - 1; c >= 0; c--)
+  //   {
+  //     std::cout << dp[r][c].
+  //   }
+  // }
+
+  // for (int r = 0; r < dpRowLength; r++)
+  // {
+  //   for (int c = 0; c < dpColLength; c++)
+  //   {
+  //     std::cout << "(y,x,score) = (" << dp[r][c].col << "," << dp[r][c].row << "," << dp[r][c].score << ")\n\n";
+  //   }
+  // }
 }

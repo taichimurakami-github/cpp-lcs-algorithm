@@ -1,6 +1,6 @@
-make --dry-run --keep-going --print-directory
-make: Entering directory `/Users/tchi/Dev_private/test'
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/taichi/dev/Private/c_cpp/algorithms/lcs'
 g++ main.cpp -O2
 ./a.out
-make: Leaving directory `/Users/tchi/Dev_private/test'
+make: Leaving directory '/home/taichi/dev/Private/c_cpp/algorithms/lcs'
  

@@ -3,5 +3,14 @@
   // 既存の属性の説明をホバーして表示します。
   // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
-  "configurations": []
+  "configurations": [
+    {
+      "program": "${workspaceRoot}/a.out",
+      "name": "test",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "miDebuggerPath": "/usr/bin/gdb"
+    }
+  ]
 }
